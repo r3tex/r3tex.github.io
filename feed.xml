@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
     <title>rluciani</title>
-    <link href="https://r3tex.github.io/r3tex.github.io/feed.xml" rel="self" />
-    <link href="https://r3tex.github.io/r3tex.github.io" />
+    <link href="https://rluciani.com/feed.xml" rel="self" />
+    <link href="https://rluciani.com" />
     <updated>2021-05-13T12:03:09+02:00</updated>
     <author>
         <name>Robert Luciani</name>
     </author>
-    <id>https://r3tex.github.io/r3tex.github.io</id>
+    <id>https://rluciani.com</id>
 
     <entry>
         <title>Robert Luciani</title>
         <author>
             <name>Robert Luciani</name>
         </author>
-        <link href="https://r3tex.github.io/r3tex.github.io/robert-luciani.html"/>
-        <id>https://r3tex.github.io/r3tex.github.io/robert-luciani.html</id>
+        <link href="https://rluciani.com/robert-luciani.html"/>
+        <id>https://rluciani.com/robert-luciani.html</id>
 
         <updated>2021-05-13T12:03:09+02:00</updated>
             <summary>
