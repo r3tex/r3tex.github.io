@@ -1,0 +1,27 @@
+{
+    "version": "https://jsonfeed.org/version/1",
+    "title": "rluciani",
+    "description": "",
+    "home_page_url": "https://r3tex.github.io/r3tex.github.io",
+    "feed_url": "https://r3tex.github.io/r3tex.github.io/feed.json",
+    "user_comment": "",
+    "author": {
+        "name": "Robert Luciani"
+    },
+    "items": [
+        {
+            "id": "https://r3tex.github.io/r3tex.github.io/robert-luciani.html",
+            "url": "https://r3tex.github.io/r3tex.github.io/robert-luciani.html",
+            "title": "Robert Luciani",
+            "summary": "this is my personal website",
+            "content_html": "<p>this is my personal website</p>",
+            "author": {
+                "name": "Robert Luciani"
+            },
+            "tags": [
+            ],
+            "date_published": "2021-05-13T12:03:09+02:00",
+            "date_modified": "2021-05-13T12:03:09+02:00"
+        }
+    ]
+}

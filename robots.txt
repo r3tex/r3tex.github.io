@@ -1,0 +1,3 @@
+User-agent: *
+Disallow:
+Sitemap: https://r3tex.github.io/r3tex.github.io/sitemap.xml
