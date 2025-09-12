@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Linux Concurrency Abstractions - Robert Luciani</title>
+  <meta name="description" content="A deep dive into how Linux handles tasks, processes, and threads">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link href="../css/main.css" rel="stylesheet">
+  <link href="../css/article.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="nav" id="navbar">
+    <div class="nav-container">
+      <a href="../#hero" class="nav-logo">RL</a>
+      <div class="nav-menu" id="nav-menu">
+        <a href="../#about" class="nav-link">About</a>
+        <a href="../#nerv-dynamics" class="nav-link">Nerv Dynamics</a>
+        <a href="../#art" class="nav-link">Art</a>
+        <a href="../#chromaform" class="nav-link">Chromaform</a>
+        <a href="../#articles" class="nav-link">Articles</a>
+        <a href="../#contact" class="nav-link">Contact</a>
+      </div>
+      <div class="nav-toggle" id="nav-toggle">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="article-main">
+    <article class="article">
+      <div class="container">
+        <!-- Article Header -->
+        <header class="article-header">
+          <div class="article-meta">
+            <time datetime="2024-01-15">January 15, 2024</time>
+            <span class="article-reading-time">8 min read</span>
+          </div>
+          <h1 class="article-title">Linux Concurrency Abstractions</h1>
+          <p class="article-subtitle">Understanding tasks, processes, and threads in the Linux kernel</p>
+          <div class="article-author">
+            <img src="../images/first.jpg" alt="Robert Luciani" class="author-avatar">
+            <div class="author-info">
+              <span class="author-name">Robert Luciani</span>
+              <span class="author-title">Software Engineer & Entrepreneur</span>
+            </div>
+          </div>
+        </header>
+
+        <!-- Article Content -->
+        <div class="article-content">
+          <p class="lead">
+            Linux's approach to concurrency is both elegant and complex. Understanding the relationships 
+            between tasks, processes, and threads is crucial for any systems programmer working with 
+            modern Linux systems.
+          </p>
+
+          <h2>The Foundation: Tasks</h2>
+          
+          <p>
+            At the heart of Linux's concurrency model lies the concept of a <strong>task</strong>. 
+            Unlike many other operating systems that distinguish sharply between processes and threads, 
+            Linux treats both as different types of tasks. This unified approach simplifies the kernel's 
+            scheduler and provides a consistent interface for managing concurrent execution.
+          </p>
+
+          <p>
+            Each task in Linux is represented by a <code>task_struct</code>, which contains all the 
+            information the kernel needs to manage that task's execution. This includes:
+          </p>
+
+          <ul>
+            <li>Process identification (PID, TGID)</li>
+            <li>Memory management information</li>
+            <li>File descriptor tables</li>
+            <li>Signal handling state</li>
+            <li>Scheduling parameters</li>
+            <li>CPU register state</li>
+          </ul>
+
+          <h2>Processes: The Traditional View</h2>
+
+          <p>
+            A <strong>process</strong> in Linux is essentially a task that has its own complete execution 
+            environment. When you create a new process using <code>fork()</code>, the kernel creates a 
+            new task_struct and copies (or shares through copy-on-write) the parent's memory space, 
+            file descriptors, and other resources.
+          </p>
+
+          <pre><code>pid_t pid = fork();
+if (pid == 0) {
+    // Child process
+    execl("/bin/ls", "ls", "-l", NULL);
+} else if (pid > 0) {
+    // Parent process
+    wait(NULL);
+}</code></pre>
+
+          <p>
+            The key characteristic of processes is <em>isolation</em>. Each process has its own virtual 
+            address space, which provides strong protection boundaries between different programs running 
+            on the system.
+          </p>
+
+          <h2>Threads: Shared Execution Contexts</h2>
+
+          <p>
+            <strong>Threads</strong> in Linux are tasks that share certain resources with other tasks. 
+            When you create a thread using <code>clone()</code> (or indirectly through pthread_create()), 
+            you specify which resources should be shared using clone flags:
+          </p>
+
+          <pre><code>// Create a thread that shares memory, files, and signals
+int thread_id = clone(thread_function, 
+                     child_stack + STACK_SIZE,
+                     CLONE_VM | CLONE_FILES | CLONE_SIGHAND,
+                     arg);</code></pre>
+
+          <h3>Common Clone Flags</h3>
+
+          <ul>
+            <li><code>CLONE_VM</code> - Share virtual memory</li>
+            <li><code>CLONE_FILES</code> - Share file descriptor table</li>
+            <li><code>CLONE_SIGHAND</code> - Share signal handlers</li>
+            <li><code>CLONE_THREAD</code> - Share thread group</li>
+          </ul>
+
+          <h2>The Scheduler's Perspective</h2>
+
+          <p>
+            From the Linux scheduler's point of view, there's no fundamental difference between processes 
+            and threads—they're all just tasks waiting to be scheduled. The Completely Fair Scheduler (CFS) 
+            assigns each task a virtual runtime and schedules the task with the lowest virtual runtime.
+          </p>
+
+          <blockquote>
+            <p>
+              "The beauty of Linux's approach is that the scheduler doesn't need to know whether it's 
+              scheduling a heavyweight process or a lightweight thread—it just schedules tasks."
+            </p>
+          </blockquote>
+
+          <h2>Memory Management Implications</h2>
+
+          <p>
+            The distinction between processes and threads becomes more apparent when we consider memory 
+            management. Processes have separate page tables and thus separate virtual address spaces, 
+            while threads within the same thread group share a single virtual address space.
+          </p>
+
+          <p>
+            This has important implications for:
+          </p>
+
+          <ul>
+            <li><strong>Performance</strong>: Context switches between threads are faster than between processes</li>
+            <li><strong>Security</strong>: Threads can access each other's memory, processes cannot</li>
+            <li><strong>Debugging</strong>: Memory corruption in one thread can affect all threads in the group</li>
+            <li><strong>Scalability</strong>: Threads consume less memory overhead than processes</li>
+          </ul>
+
+          <h2>Practical Considerations</h2>
+
+          <p>
+            When designing concurrent systems on Linux, understanding these abstractions helps you make 
+            informed decisions:
+          </p>
+
+          <h3>Use Processes When:</h3>
+          <ul>
+            <li>You need strong isolation between concurrent units</li>
+            <li>Failure in one unit shouldn't affect others</li>
+            <li>You're working with untrusted code</li>
+            <li>Different units need different privileges</li>
+          </ul>
+
+          <h3>Use Threads When:</h3>
+          <ul>
+            <li>You need fast communication between concurrent units</li>
+            <li>Context switch performance is critical</li>
+            <li>Memory usage needs to be minimized</li>
+            <li>Sharing resources like file descriptors is beneficial</li>
+          </ul>
+
+          <h2>Conclusion</h2>
+
+          <p>
+            Linux's unified task model provides a powerful foundation for concurrent programming. 
+            By treating processes and threads as different configurations of the same underlying 
+            abstraction, Linux achieves both simplicity in the kernel and flexibility for applications.
+          </p>
+
+          <p>
+            Understanding these concepts is essential for writing efficient, scalable systems software 
+            and for debugging complex concurrency issues in production systems.
+          </p>
+        </div>
+
+        <!-- Article Footer -->
+        <footer class="article-footer">
+          <div class="article-tags">
+            <span class="tag">Linux</span>
+            <span class="tag">Concurrency</span>
+            <span class="tag">Systems Programming</span>
+            <span class="tag">Kernel</span>
+          </div>
+          
+          <div class="article-navigation">
+            <a href="../#articles" class="nav-back">← Back to Articles</a>
+          </div>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2024 Robert Luciani. Built with passion and code.</p>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>
