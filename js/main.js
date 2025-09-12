@@ -56,21 +56,30 @@ document.addEventListener('DOMContentLoaded', function() {
   if ('IntersectionObserver' in window) {
     const observerOptions = {
       root: null, // Use viewport as root
-      threshold: 0.3,
-      rootMargin: '-40% 0px -40% 0px'
+      threshold: 0.2,
+      rootMargin: '-30% 0px -50% 0px'
     };
     
     const observer = new IntersectionObserver((entries) => {
+      // Find the section with the highest intersection ratio
+      let bestEntry = null;
+      let bestRatio = 0;
+      
       entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const sectionId = entry.target.id;
-          if (sectionId && sectionId !== currentSection) {
-            updateActiveNavigation(sectionId);
-            currentSection = sectionId;
-            history.replaceState(null, null, `#${sectionId}`);
-          }
+        if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
+          bestRatio = entry.intersectionRatio;
+          bestEntry = entry;
         }
       });
+      
+      if (bestEntry) {
+        const sectionId = bestEntry.target.id;
+        if (sectionId && sectionId !== currentSection) {
+          updateActiveNavigation(sectionId);
+          currentSection = sectionId;
+          history.replaceState(null, null, `#${sectionId}`);
+        }
+      }
     }, observerOptions);
     
     // Observe all content sections
@@ -105,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       
-      const sections = ['about', 'nerv-dynamics', 'art', 'chromaform', 'articles', 'contact'];
+      const sections = ['about', 'chromaform', 'art', 'nerv-dynamics', 'articles', 'contact'];
       const currentIndex = sections.indexOf(currentSection);
       
       let newIndex;
@@ -142,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Preload critical resources
-  const criticalImages = ['./images/first.jpg'];
+  const criticalImages = ['./images/main/first.jpg'];
   criticalImages.forEach(src => {
     const img = new Image();
     img.src = src;
@@ -156,20 +165,69 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle initial hash after page load
     handleInitialHash();
+    
+    // Load recent articles
+    loadRecentArticles();
   });
   
-  // Enhanced accessibility
-  document.querySelectorAll('a, button, [tabindex]').forEach(element => {
-    element.addEventListener('focus', function() {
-      this.style.outline = '2px solid white';
-      this.style.outlineOffset = '3px';
+  // Load recent articles function
+  async function loadRecentArticles() {
+    try {
+      const response = await fetch('./data/articles.json');
+      const articles = await response.json();
+      
+      // Sort by date (newest first) and take the latest 3
+      const sortedArticles = articles
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 3);
+      
+      const container = document.getElementById('recent-articles');
+      if (container && sortedArticles.length > 0) {
+        container.innerHTML = sortedArticles.map(article => `
+          <div class="article-preview">
+            <h3 class="article-preview-title">
+              <a href="${article.url}">${article.title}</a>
+            </h3>
+            <p class="article-preview-description">${article.description}</p>
+            <div class="article-preview-meta">
+              <span class="article-preview-date">${formatDate(article.date)}</span>
+              <span class="article-preview-category">${article.category}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+    } catch (error) {
+      console.error('Error loading articles:', error);
+      // Fallback content if articles can't be loaded
+      const container = document.getElementById('recent-articles');
+      if (container) {
+        container.innerHTML = `
+          <div class="article-preview">
+            <h3 class="article-preview-title">
+              <a href="articles/linux-concurrency.html">Linux Concurrency Abstractions</a>
+            </h3>
+            <p class="article-preview-description">Understanding tasks, processes, and threads in the Linux kernel</p>
+            <div class="article-preview-meta">
+              <span class="article-preview-date">January 2024</span>
+              <span class="article-preview-category">Technology & Computer Science</span>
+            </div>
+          </div>
+        `;
+      }
+    }
+  }
+  
+  // Format date helper
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long',
+      day: 'numeric'
     });
-    
-    element.addEventListener('blur', function() {
-      this.style.outline = '';
-      this.style.outlineOffset = '';
-    });
-  });
+  }
+  
+  // Enhanced accessibility - removed focus outline styling
   
   // Smooth scrolling fallback for browsers without smooth scroll support
   if (!CSS.supports('scroll-behavior', 'smooth')) {
