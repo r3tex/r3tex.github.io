@@ -304,7 +304,8 @@ a { color: inherit; text-decoration: none; }
 .art-item.hidden { display: none; }
 .art-item .subsection { margin-top: 0; }
 
-/* lifestyle / generic bulleted list */
+/* bulleted list inside any panel — green em-dash bullets */
+.section ul,
 .lifestyle-list {
   list-style: none;
   padding: 0;
@@ -313,11 +314,13 @@ a { color: inherit; text-decoration: none; }
   flex-direction: column;
   gap: 10px;
 }
+.section ul li,
 .lifestyle-list li {
   padding-left: 1.5ch;
   position: relative;
   color: var(--fg);
 }
+.section ul li::before,
 .lifestyle-list li::before {
   content: "—";
   color: var(--cyan);
@@ -365,6 +368,13 @@ a { color: inherit; text-decoration: none; }
   width: 100%;
   height: auto;
   display: block;
+}
+
+/* small, borderless figure variant */
+.section figure.figure-sm {
+  margin: 16px 0;
+  border: none;
+  max-width: 35%;
 }
 
 .section-link {
