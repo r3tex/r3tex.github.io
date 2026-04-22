@@ -52,7 +52,66 @@ document.addEventListener('DOMContentLoaded', () => {
       const initial = section.querySelector('.filter.active')?.dataset.filter;
       if (initial) applyFilter(initial);
     }
+
+    // Lightbox — intercept thumbnail clicks
+    section.querySelectorAll('.t-thumb').forEach(a => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        lightbox.open(a.getAttribute('href'));
+      });
+    });
   }
+
+  // ----------------------------------------------------------
+  // Lightbox — fullscreen image preview with history integration
+  // Browser back (or X button / Escape) closes the preview.
+  // ----------------------------------------------------------
+  const lightbox = (() => {
+    let el, imgEl, isOpen = false;
+
+    function build() {
+      el = document.createElement('div');
+      el.className = 'lightbox';
+      el.innerHTML = `
+        <button class="lightbox-close" aria-label="Close preview">×</button>
+        <img alt="">
+      `;
+      imgEl = el.querySelector('img');
+      el.querySelector('.lightbox-close').addEventListener('click', close);
+      el.addEventListener('click', (e) => { if (e.target === el) close(); });
+      document.body.appendChild(el);
+    }
+
+    function open(src) {
+      if (!el) build();
+      imgEl.src = src;
+      el.classList.add('open');
+      document.body.classList.add('lightbox-open');
+      isOpen = true;
+      // Push a history entry so the back button closes the lightbox
+      history.pushState({ lightbox: true }, '', location.href);
+    }
+
+    function close() {
+      if (isOpen) history.back();
+    }
+
+    // Called by the global popstate handler when a lightbox is open
+    function handlePop() {
+      if (!isOpen) return false;
+      el.classList.remove('open');
+      document.body.classList.remove('lightbox-open');
+      imgEl.src = '';
+      isOpen = false;
+      return true;
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen) close();
+    });
+
+    return { open, close, handlePop, isOpen: () => isOpen };
+  })();
 
   // ----------------------------------------------------------
   // Panel routing
@@ -83,6 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   window.addEventListener('popstate', () => {
+    // If a lightbox is open, closing it takes precedence over panel routing
+    if (lightbox.handlePop()) return;
     showPanel(location.hash.slice(1) || DEFAULT);
   });
 
